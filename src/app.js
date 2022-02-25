@@ -1,44 +1,28 @@
 import dotenv from 'dotenv';
 import express from 'express';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
-import { isInvalid } from './lib/template-helpers.js';
-import { indexRouter } from './routes/index-routes.js';
+import { eventRouter } from './routes/event-routes.js';
+import { userRouter } from './routes/user-routes.js';
 
 dotenv.config();
 
 const { PORT: port = 3000 } = process.env;
 
 const app = express();
+app.use(express.json());
 
-// Sér um að req.body innihaldi gögn úr formi
-app.use(express.urlencoded({ extended: true }));
-
-const path = dirname(fileURLToPath(import.meta.url));
-
-app.use(express.static(join(path, '../public')));
-app.set('views', join(path, '../views'));
-app.set('view engine', 'ejs');
-
-app.locals = {
-  // TODO hjálparföll fyrir template
-};
-
-app.use('/', indexRouter);
-// TODO admin routes
+app.use('/events', eventRouter);
+app.use('/user', userRouter);
 
 /** Middleware sem sér um 404 villur. */
 app.use((req, res) => {
-  const title = 'Síða fannst ekki';
-  res.status(404).render('error', { title });
+  res.status(404).json({ error: 'fannst ekki' });
 });
 
 /** Middleware sem sér um villumeðhöndlun. */
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err);
-  const title = 'Villa kom upp';
-  res.status(500).render('error', { title });
+  res.status(500).json({ error: 'villa kom upp' });
 });
 
 app.listen(port, () => {

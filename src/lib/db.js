@@ -61,4 +61,17 @@ export async function end() {
   await pool.end();
 }
 
-/* TODO útfæra aðgeðir á móti gagnagrunni */
+export async function listEvents() {
+  const q = 'SELECT * FROM events';
+  const res = await query(q);
+  return res.rows;
+}
+
+export async function getEvent(id) {
+  const q = 'SELECT * FROM events WHERE id=$1';
+  const res = await query(q, [id]);
+  if (res && res.rowCount === 1) {
+    return res.rows[0];
+  }
+  return null;
+}
