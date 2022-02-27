@@ -68,8 +68,28 @@ export async function listEvents() {
 }
 
 export async function getEvent(id) {
+  if (Number.isNaN(id)) {
+    return null;
+  }
   const q = 'SELECT * FROM events WHERE id=$1';
   const res = await query(q, [id]);
+  if (res && res.rowCount === 1) {
+    return res.rows[0];
+  }
+  return null;
+}
+
+export async function getUsers() {
+  const q = 'SELECT name, username FROM users';
+  const res = await query(q);
+  return res.rows;
+}
+
+export async function findUser(id) {
+  const q = 'SELECT name, username FROM users WHERE id=$1';
+  const values = [id];
+
+  const res = await query(q, values);
   if (res && res.rowCount === 1) {
     return res.rows[0];
   }

@@ -11,7 +11,7 @@ async function allEventRoute(req, res) {
 
 async function eventRoute(req, res) {
   const { id } = req.params;
-  const event = await getEvent(Number.parseInt(id, 10));
+  const event = await getEvent(Number(id));
   if (!event) {
     res.status(404).json({ error: 'fannst ekki' });
   }
@@ -20,5 +20,3 @@ async function eventRoute(req, res) {
 
 eventRouter.get('/', catchErrors(allEventRoute));
 eventRouter.get('/:id', catchErrors(eventRoute));
-
-// TODO útfæra öll routes

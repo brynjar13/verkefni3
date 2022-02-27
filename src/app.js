@@ -1,17 +1,30 @@
 import dotenv from 'dotenv';
 import express from 'express';
+import passport from './lib/login.js';
 import { eventRouter } from './routes/event-routes.js';
 import { userRouter } from './routes/user-routes.js';
 
 dotenv.config();
 
-const { PORT: port = 3000 } = process.env;
+const {
+  PORT: port = 3000,
+  JWT_SECRET: jwtSecret,
+  TOKEN_LIFETIME: tokenLifetime = 200,
+  DATABASE_URL: databaseUrl,
+} = process.env;
+
+if (!databaseUrl || !jwtSecret) {
+  console.error('vantar .env gildi');
+  process.exit(1);
+}
 
 const app = express();
 app.use(express.json());
 
-app.use('/events', eventRouter);
+app.use(passport.initialize());
+
 app.use('/user', userRouter);
+app.use('/events', eventRouter);
 
 /** Middleware sem sér um 404 villur. */
 app.use((req, res) => {
