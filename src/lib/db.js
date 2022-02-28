@@ -95,3 +95,17 @@ export async function findUser(id) {
   }
   return null;
 }
+
+export async function registerUser(name, username, password) {
+  const q = `
+  INSERT INTO
+    users(name, username, password, admin)
+  VALUES($1, $2, $3, false)
+    RETURNING id, name`;
+  const values = [name, username, password];
+  const res = await query(q, values);
+  if (res && res.rowCount === 1) {
+    return res.rows[0];
+  }
+  return null;
+}
