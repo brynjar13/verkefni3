@@ -109,3 +109,22 @@ export async function registerUser(name, username, password) {
   }
   return null;
 }
+
+export async function register(name, comment, event) {
+  let success = true;
+  const q = `
+  INSERT INTO
+    registrations(name, comment, event)
+  VALUES
+    ($1, $2, $3)`;
+
+  const values = [name, comment, event];
+  try {
+    await query(q, values);
+  } catch (e) {
+    console.error('Error inserting signature', e);
+    success = false;
+  }
+
+  return success;
+}

@@ -1,5 +1,6 @@
 import { body, validationResult } from 'express-validator';
 import xss from 'xss';
+import { findByUsername } from './users.js';
 
 export const registrationValidationMiddleware = [
   body('name')
@@ -19,12 +20,23 @@ export const registrationValidationMiddleware = [
   body('password')
     .isLength({ min: 5 })
     .withMessage('Lykilorð þarf að vera allavegana 5 stafir'),
+  body('password')
+    .isLength({ max: 256 })
+    .withMessage('Lykilorð má ekki vera meira en 256 stafir'),
 ];
 
-export function validateRequest(req, res, next) {
+export async function validateRequest(req, res, next) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+  const { username } = req;
+  const result = await findByUsername(username);
+  const customValidation = [];
+  if (result !== null) {
+    customValidation.push({ param: username, msg: 'Notendanafn í notkun' });
+  }
+  if (!errors.isEmpty() || customValidation.length > 0) {
+    return res
+      .status(400)
+      .json({ errors: errors.errors.concat(customValidation) });
   }
 
   return next();

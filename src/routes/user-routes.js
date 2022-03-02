@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { catchErrors } from '../lib/catch-errors.js';
 import { findUser, getUsers, registerUser } from '../lib/db.js';
 import { jwtOptions, requireAuthentication } from '../lib/login.js';
-import { comparePasswords, findById, findByUsername } from '../lib/users.js';
+import { comparePasswords, findByUsername } from '../lib/users.js';
 import {
   registrationValidationMiddleware,
   validateRequest,
