@@ -75,7 +75,7 @@ userRouter.post('/login', catchErrors(login));
 userRouter.post(
   '/register',
   registrationValidationMiddleware,
-  validateRequest,
+  catchErrors(validateRequest),
   catchErrors(registerRoute)
 );
 userRouter.get('/me', requireAuthentication, catchErrors(meRoute));

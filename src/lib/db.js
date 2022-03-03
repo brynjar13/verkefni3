@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises';
 import pg from 'pg';
+import xss from 'xss';
 
 const SCHEMA_FILE = './sql/schema.sql';
 const DROP_SCHEMA_FILE = './sql/drop.sql';
@@ -86,7 +87,7 @@ export async function getUsers() {
 }
 
 export async function findUser(id) {
-  const q = 'SELECT name, username FROM users WHERE id=$1';
+  const q = 'SELECT id, name, username FROM users WHERE id=$1';
   const values = [id];
 
   const res = await query(q, values);
@@ -127,4 +128,142 @@ export async function register(name, comment, event) {
   }
 
   return success;
+}
+
+export async function createEvent(id, name, slug, description) {
+  let success = true;
+  const q = `
+  INSERT INTO
+    events(userid, name, slug, description)
+  VALUES
+    ($1, $2, $3, $4)`;
+  const values = [id, name, slug, description];
+  try {
+    await query(q, values);
+  } catch (error) {
+    console.error(error);
+    success = false;
+  }
+  return success;
+}
+
+export async function findEventByName(name) {
+  const q = 'SELECT * FROM events WHERE name=$1';
+  const values = [name];
+  try {
+    const result = await query(q, values);
+
+    if (result.rowCount === 1) {
+      return result.rows[0];
+    }
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+
+  return false;
+}
+
+export async function removeEvent(id) {
+  let success = true;
+  const q = 'DELETE FROM events WHERE id=$1';
+  const values = [id];
+  try {
+    await query(q, values);
+  } catch (error) {
+    console.error(error);
+    success = false;
+  }
+  return success;
+}
+
+// kannski færa
+function isEmpty(s) {
+  return s == null && !s;
+}
+
+function validate(title, text) {
+  const errors = [];
+
+  if (!isEmpty(title)) {
+    if (typeof title !== 'string' || title.length === 0) {
+      errors.push({
+        field: 'title',
+        error: 'Title must be a non-empty string',
+      });
+    }
+  }
+
+  if (!isEmpty(text)) {
+    if (typeof text !== 'string' || text.length === 0) {
+      errors.push({
+        field: 'text',
+        error: 'Text must be a non-empty string',
+      });
+    }
+  }
+
+  return errors;
+}
+
+export async function update(id, item) {
+  const result = await query('SELECT * FROM events where id = $1', [id]);
+
+  if (result.rows.length === 0) {
+    return {
+      success: false,
+      notFound: true,
+      validation: [],
+    };
+  }
+
+  const validationResult = validate(item.name);
+
+  if (validationResult.length > 0) {
+    return {
+      success: false,
+      notFound: false,
+      validation: validationResult,
+    };
+  }
+
+  const changedColumns = [
+    !isEmpty(item.name) ? 'title' : null,
+    !isEmpty(item.description) ? 'text' : null,
+  ].filter(Boolean);
+
+  const changedValues = [
+    !isEmpty(item.title) ? xss(item.title) : null,
+    !isEmpty(item.description) ? xss(item.description) : null,
+  ].filter(Boolean);
+
+  if (
+    changedColumns.length === 0 ||
+    changedColumns.length !== changedValues.length
+  ) {
+    return {
+      success: false,
+      notFound: false,
+      validation: [{ field: '', error: 'Ógild gögn' }],
+    };
+  }
+
+  const updates = [id, ...changedValues];
+
+  const updatedColumnsQuery = changedColumns.map(
+    (column, i) => `${column} = $${i + 2}`
+  );
+
+  const q = `
+    UPDATE events
+    SET ${updatedColumnsQuery.join(', ')}
+    WHERE id = $1
+    RETURNING *`;
+
+  const updateResult = await query(q, updates);
+
+  return {
+    success: true,
+    item: updateResult.rows[0],
+  };
 }
