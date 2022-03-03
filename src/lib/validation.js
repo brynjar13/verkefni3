@@ -1,6 +1,6 @@
 import { body, validationResult } from 'express-validator';
 import xss from 'xss';
-import { findEventByName, getEvent } from './db.js';
+import { findEventByName } from './db.js';
 import { findByUsername } from './users.js';
 
 export const eventValidation = [
