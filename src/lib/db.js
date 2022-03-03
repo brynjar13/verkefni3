@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises';
 import pg from 'pg';
+import slugify from 'slugify';
 import xss from 'xss';
 
 const SCHEMA_FILE = './sql/schema.sql';
@@ -208,23 +209,14 @@ function isEmpty(s) {
   return s == null && !s;
 }
 
-function validate(title, text) {
+function validate(title) {
   const errors = [];
 
   if (!isEmpty(title)) {
     if (typeof title !== 'string' || title.length === 0) {
       errors.push({
         field: 'title',
-        error: 'Title must be a non-empty string',
-      });
-    }
-  }
-
-  if (!isEmpty(text)) {
-    if (typeof text !== 'string' || text.length === 0) {
-      errors.push({
-        field: 'text',
-        error: 'Text must be a non-empty string',
+        error: 'Titill má ekki vera tómur',
       });
     }
   }
@@ -254,13 +246,17 @@ export async function update(id, item) {
   }
 
   const changedColumns = [
-    !isEmpty(item.name) ? 'title' : null,
-    !isEmpty(item.description) ? 'text' : null,
+    !isEmpty(item.name) ? 'name' : null,
+    !isEmpty(item.description) ? 'description' : null,
+    !isEmpty(item.name) ? 'slug' : null,
+    'updated',
   ].filter(Boolean);
 
   const changedValues = [
-    !isEmpty(item.title) ? xss(item.title) : null,
+    !isEmpty(item.name) ? xss(item.name) : null,
     !isEmpty(item.description) ? xss(item.description) : null,
+    !isEmpty(item.name) ? xss(slugify(item.name)) : null,
+    item.updated,
   ].filter(Boolean);
 
   if (

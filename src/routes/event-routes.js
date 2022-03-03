@@ -85,12 +85,26 @@ async function eventRoute(req, res) {
 async function patchEvent(req, res) {
   const { name, description } = req.body;
   const { user } = req;
+  const updated = new Date();
   const { id } = req.params;
-  const result = await update(id, { name, description });
-  if (!result) {
+  const event = await getEvent(id);
+  if (!event) {
     return res.status(404).json({ error: 'Fannst ekki' });
   }
-  return res.status(200).json({ result });
+  if (event.userid === user.id || user.admin) {
+    const result = await update(id, { name, description, updated });
+    if (!result.success && result.notFound) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    if (!result.success && result.validation.length > 0) {
+      return res.status(400).json(result.validation);
+    }
+    return res.status(200).json({ result, msg: 'Viðburður uppfærður' });
+  }
+  return res.status(401).json({
+    errors: 'bara admin eða sá sem bjó til viðburðinn má breyta honum',
+  });
 }
 
 async function deleteEvent(req, res) {
