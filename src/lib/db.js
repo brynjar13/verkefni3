@@ -177,6 +177,32 @@ export async function removeEvent(id) {
   return success;
 }
 
+export async function getRegistrations(id) {
+  const q = 'SELECT name FROM registrations WHERE event=$1';
+  const values = [id];
+  const result = await query(q, values);
+  return result.rows;
+}
+
+export async function checkRegistration(username, id) {
+  const q = 'SELECT * FROM registrations WHERE name=$1 AND event=$2';
+  const values = [username, id];
+  const result = await query(q, values);
+  let success = true;
+  if (result && result.rowCount === 1) {
+    const q2 = 'DELETE FROM registrations WHERE name=$1 AND event =$2';
+    const values2 = [username, id];
+    try {
+      await query(q2, values2);
+    } catch (error) {
+      console.error(error);
+      success = false;
+    }
+    return success;
+  }
+  return null;
+}
+
 // kannski færa
 function isEmpty(s) {
   return s == null && !s;

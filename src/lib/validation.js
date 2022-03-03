@@ -73,7 +73,13 @@ export const xssSanitizationMiddleware = [
   body('description').customSanitizer((v) => xss(v)),
 ];
 
+export const registerXssSanitizationMiddleware = [
+  body('comment').customSanitizer((v) => xss(v)),
+];
+
 export const sanitizationMiddleware = [
   body('name').trim().escape(),
   body('description').trim().escape(),
 ];
+
+export const registerSanitizationMiddleware = [body('comment').trim().escape()];

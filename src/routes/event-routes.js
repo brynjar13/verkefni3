@@ -2,9 +2,11 @@ import express from 'express';
 import slugify from 'slugify';
 import { catchErrors } from '../lib/catch-errors.js';
 import {
+  checkRegistration,
   createEvent,
   findUser,
   getEvent,
+  getRegistrations,
   listEvents,
   register,
   removeEvent,
@@ -14,6 +16,8 @@ import { requireAuthentication } from '../lib/login.js';
 import {
   eventValidateRequest,
   eventValidation,
+  registerSanitizationMiddleware,
+  registerXssSanitizationMiddleware,
   sanitizationMiddleware,
   xssSanitizationMiddleware,
 } from '../lib/validation.js';
@@ -36,23 +40,35 @@ async function makeEvent(req, res) {
     console.error(error);
   }
   if (success) {
-    return res.status(200).json({ sucess: 'event created' });
+    return res.status(201).json({ sucess: 'Viðburður búinn til' });
   }
-  return res.status(500).json({ error: 'not created' });
+  return res.status(500).json({ error: 'something went wrong' });
 }
 
 async function registerForEvent(req, res) {
-  const { username, comment } = req;
+  const { comment } = req.body;
+  const { user } = req;
   const { id } = req.params;
+  const event = await getEvent(id);
+  if (!event) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  const username = await findUser(user.id);
+  const registrations = await getRegistrations(id);
+  for (let i = 0; i < registrations.length; i += 1) {
+    if (username === registrations.name) {
+      return res.status(400).json({ error: 'Þú ert nú þegar skráð-ur' });
+    }
+  }
   let success;
   try {
-    success = await register(username, comment, id);
+    success = await register(username.username, comment, id);
   } catch (error) {
     console.error(error);
   }
 
   if (success) {
-    return res.status(200).json({ msg: 'Þú hefur verið skráð/ur' });
+    return res.status(201).json({ msg: 'Þú hefur verið skráð-ur' });
   }
   return res.status(500).json({ error: 'something went wrong' });
 }
@@ -68,10 +84,11 @@ async function eventRoute(req, res) {
 
 async function patchEvent(req, res) {
   const { name, description } = req.body;
+  const { user } = req;
   const { id } = req.params;
   const result = await update(id, { name, description });
   if (!result) {
-    return res.status(400).json({ error: 'not found' });
+    return res.status(404).json({ error: 'Fannst ekki' });
   }
   return res.status(200).json({ result });
 }
@@ -80,7 +97,7 @@ async function deleteEvent(req, res) {
   const { id } = req.params;
   const event = await getEvent(id);
   if (!event) {
-    return res.status(404).json({ error: 'not found' });
+    return res.status(404).json({ error: 'Fannst ekki' });
   }
   const { user } = req;
   let success;
@@ -91,7 +108,7 @@ async function deleteEvent(req, res) {
       console.error(error);
     }
     if (success) {
-      return res.status(200).json({ msg: 'Event deleted' });
+      return res.status(204).json({ msg: 'Viðburði eytt' });
     }
     return res.status(500).json({ error: 'something went wrong' });
   }
@@ -99,6 +116,25 @@ async function deleteEvent(req, res) {
     .status(401)
     .json({ errors: 'bara admin eða sá sem bjó til viðburðinn má eyða honum' });
 }
+
+async function deleteRegistration(req, res) {
+  const { user } = req;
+  const { id } = req.params;
+  const event = await getEvent(id);
+  const username = await findUser(user.id);
+  if (!event) {
+    return res.status(404).json({ error: 'Fannst ekki' });
+  }
+  const check = await checkRegistration(username.username, id);
+  if (!check) {
+    res.status(400).json({
+      error:
+        'Það er ekki hægt að afskrá sig nema að maður sé búinn að skrá sig first',
+    });
+  }
+  return res.status(204).json({ msg: 'Afskráning tókst' });
+}
+
 eventRouter.get('/', catchErrors(allEventRoute));
 eventRouter.post(
   '/',
@@ -110,10 +146,17 @@ eventRouter.post(
   catchErrors(makeEvent)
 );
 eventRouter.get('/:id', catchErrors(eventRoute));
-eventRouter.patch('/:id', catchErrors(patchEvent));
+eventRouter.patch('/:id', requireAuthentication, catchErrors(patchEvent));
 eventRouter.delete('/:id', requireAuthentication, catchErrors(deleteEvent));
 eventRouter.post(
   '/:id/register',
   requireAuthentication,
+  registerXssSanitizationMiddleware,
+  registerSanitizationMiddleware,
   catchErrors(registerForEvent)
+);
+eventRouter.delete(
+  '/:id/register',
+  requireAuthentication,
+  catchErrors(deleteRegistration)
 );
