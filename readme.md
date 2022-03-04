@@ -4,7 +4,7 @@
 
 -`Notendanafn`: admin
 
--`Lykilorð`: 123
+-`Lykilorð`: 12345
 
 # Nokkur dæmi um vefþjónustu köll með curl
 
