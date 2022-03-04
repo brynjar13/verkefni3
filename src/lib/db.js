@@ -179,7 +179,7 @@ export async function removeEvent(id) {
 }
 
 export async function getRegistrations(id) {
-  const q = 'SELECT name FROM registrations WHERE event=$1';
+  const q = 'SELECT name, comment FROM registrations WHERE event=$1';
   const values = [id];
   const result = await query(q, values);
   return result.rows;

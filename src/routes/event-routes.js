@@ -76,10 +76,11 @@ async function registerForEvent(req, res) {
 async function eventRoute(req, res) {
   const { id } = req.params;
   const event = await getEvent(Number(id));
+  const registrations = await getRegistrations(id);
   if (!event) {
     return res.status(404).json({ error: 'fannst ekki' });
   }
-  return res.json({ event });
+  return res.json({ event, registrations });
 }
 
 async function patchEvent(req, res) {
