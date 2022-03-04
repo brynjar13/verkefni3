@@ -9,6 +9,7 @@
 # Nokkur dæmi um vefþjónustu köll með curl
 
 GET /events: curl https://vef-2022-verkefni3.herokuapp.com/events
+
 GET /events/:id: curl https://vef-2022-verkefni3.herokuapp.com/events/1
 
 ---
