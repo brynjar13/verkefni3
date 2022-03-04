@@ -55,19 +55,22 @@ async function registerRoute(req, res) {
 
 async function usersRoute(req, res) {
   const users = await getUsers();
-  res.status(200).json({ users });
+  return res.status(200).json({ users });
 }
 
 async function meRoute(req, res) {
   const { user } = req;
   const me = await findUser(user.id);
-  res.status(200).json({ me });
+  return res.status(200).json({ me });
 }
 
 async function userIdRoute(req, res) {
   const { id } = req.params;
   const user = await findUser(id);
-  res.status(200).json({ user });
+  if (!user) {
+    return res.status(404).json({ error: 'Fannst ekki' });
+  }
+  return res.status(200).json({ user });
 }
 
 userRouter.get('/', requireAuthentication, isAdmin, catchErrors(usersRoute));

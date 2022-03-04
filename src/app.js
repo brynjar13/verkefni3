@@ -4,7 +4,7 @@ import passport from './lib/login.js';
 import { eventRouter } from './routes/event-routes.js';
 import { userRouter } from './routes/user-routes.js';
 
-dotenv.config();
+dotenv.config({ path: '../.env.test' });
 
 const {
   PORT: port = 3000,

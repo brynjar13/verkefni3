@@ -26,7 +26,7 @@ export const eventRouter = express.Router();
 
 async function allEventRoute(req, res) {
   const events = await listEvents();
-  res.json({ events });
+  return res.status(200).json({ events });
 }
 
 async function makeEvent(req, res) {
@@ -56,7 +56,7 @@ async function registerForEvent(req, res) {
   const username = await findUser(user.id);
   const registrations = await getRegistrations(id);
   for (let i = 0; i < registrations.length; i += 1) {
-    if (username === registrations.name) {
+    if (username.username === registrations[i].name) {
       return res.status(400).json({ error: 'Þú ert nú þegar skráð-ur' });
     }
   }
@@ -77,9 +77,9 @@ async function eventRoute(req, res) {
   const { id } = req.params;
   const event = await getEvent(Number(id));
   if (!event) {
-    res.status(404).json({ error: 'fannst ekki' });
+    return res.status(404).json({ error: 'fannst ekki' });
   }
-  res.json({ event });
+  return res.json({ event });
 }
 
 async function patchEvent(req, res) {
