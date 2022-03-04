@@ -141,7 +141,7 @@ async function deleteRegistration(req, res) {
   }
   const check = await checkRegistration(username.username, id);
   if (!check) {
-    res.status(400).json({
+    return res.status(400).json({
       error:
         'Það er ekki hægt að afskrá sig nema að maður sé búinn að skrá sig first',
     });
